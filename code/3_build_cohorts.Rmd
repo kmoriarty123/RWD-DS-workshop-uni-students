@@ -1,8 +1,8 @@
 ---
 Author: "Kathleen Moriarty"
-Course: "Real-World Data (395-0102-00L) Autumn 2022"
-Location: "D-HEST, ETH Zurich"
-Date: "22 November 2022"
+Course: "Introducation to Data Science and RWD"
+Location: "Roche Rotkreuz"
+Date: "30 March 2023"
 Title: "Explore CMS Synthetic Claims Data: Build Cohort"
 Desc: "Build cohorts for PTCA vs CABG comparison"
 output: html_notebook

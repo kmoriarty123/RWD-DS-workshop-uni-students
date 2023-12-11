@@ -1,8 +1,8 @@
 ---
 Author: "Kathleen Moriarty"
-Course: "Real-World Data (395-0102-00L) Autumn 2022"
-Location: "D-HEST, ETH Zurich"
-Date: "22 November 2022"
+Course: "Introducation to Data Science and RWD"
+Location: "Roche Rotkreuz"
+Date: "30 March 2023"
 Desc: 'Clean datasets: make new variables, change variable types'
 Title: Explore CMS Synthetic Claims
 output: html_document:

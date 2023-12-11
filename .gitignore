@@ -32,6 +32,8 @@ event_documents/*
 
 # Play files
 code/play/*
+code_FHNW/*
+code_ETH/*
 
 # Admin files
 admin/*

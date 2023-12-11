@@ -1,8 +1,8 @@
 ---
 Author: "Kathleen Moriarty"
-Course: "Real-World Data (395-0102-00L) Autumn 2022"
-Location: "D-HEST, ETH Zurich"
-Date: "22 November 2022"
+Course: "Introducation to Data Science and RWD"
+Location: "Roche Rotkreuz"
+Date: "30 March 2023"
 Title: "Explore CMS Synthetic Claims Data: Prepare Cohort for Analysis"
 Desc: "Prepare the Cohort for analysis: combine cohort with demographics and  select all claims records 12+/- index date"
 output: html_notebook
@@ -15,7 +15,8 @@ output: html_notebook
 
 # Join cohort table with claims table and select only claims wihtin +/- 12 months of index date
 cohort_claims <- cohort %>% 
-  left_join(ip_op_carrier_claims, by = c("ID")) %>% 
+  #left_join(ip_op_carrier_claims, by = c("ID")) %>% 
+  left_join(ip_op_claims, by = c("ID")) %>% 
   mutate(year_plus_ind = index_dt %m+% months(12),
          year_minus_ind = index_dt %m-% months(12))
 

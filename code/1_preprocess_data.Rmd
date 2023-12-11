@@ -1,10 +1,10 @@
 ---
 Author: "Kathleen Moriarty"
-Course: "Real-World Data (395-0102-00L) Autumn 2022"
-Location: "D-HEST, ETH Zurich"
-Date: "22 November 2022"
+Course: "Introducation to Data Science and RWD"
+Location: "Roche Rotkreuz"
+Date: "30 March 2023"
 Title: "Explore CMS Synthetic Claims Data: Preprocess data sets"
-Desc: "Make new variable, change variable types, filter and join tables"
+Desc: "Data cleaning: make new variable, change variable types, filter and join tables"
 output: html_document
 ---
 
@@ -41,6 +41,7 @@ ip_claims1 <- NULL
 # Outpatient claims
 
 ```{r}
+
 op_claims <- op_claims1 %>% 
   mutate(CLM_FROM_DT = lubridate::ymd(CLM_FROM_DT),
          CLM_THRU_DT = lubridate::ymd(CLM_THRU_DT),
@@ -68,6 +69,7 @@ op_claims1 <- NULL
 # carrier claims
 
 ```{r}
+
 # Commented for memory concerns
 #carrier_data_all <- rbind(carrier1_data1, carrier2_data1)
 #carrier_claims <- carrier_data_all %>% 
@@ -92,6 +94,7 @@ op_claims1 <- NULL
 # Drug claims
 
 ```{r}
+
 # Commented for memory concerns
 #rx_claims <- drug_data1 %>% 
 #  mutate(SRVC_DT = lubridate::ymd(SRVC_DT),
@@ -103,12 +106,11 @@ op_claims1 <- NULL
          
 ```
 
-# Combine ip, op, carrier claims data
+# Combine ip, op claims data
 
 ```{r}
+
 ip_op_claims <- bind_rows(op_claims, ip_claims, id = NULL)
-# Commented for memory concerns
-#ip_op_carrier_claims <- bind_rows(ip_op_claims, carrier_claims, id = NULL)
 
 ```
 

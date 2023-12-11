@@ -1,25 +1,29 @@
 # Author: Kathleen Moriarty
-# Course: Real-World Data (395-0102-00L) Autumn 2022
-# Location: D-HEST, ETH Zurich
-# Date: 22 November 2022
+# Course: Introducation to Data Science and RWD
+# Location: Roche Rotkreuz
+# Date: 30 March 2023
 # Title: Explore CMS Synthetic Claims Data: Prepare data sets
-# Desc: Import and combine all datasets
+# Desc: Import all datasets
 
 ##### Set up environment ##### 
 
+# Clear the environment
 rm(list=ls())
+
+# Change the below directory to match your working directory
+# Within the working directory, you will need to have a folder titled 'data' where you store the data files
 setwd("C:/Users/moriark1/Desktop/uni_outreach")
 
 # Packages
-library(dplyr)
+library(bit64) # provides 64bit (signed) integers
 library(data.table) # read .csv
-library(readr)
-library(bit64) 
-library(stringr)
-library(ggplot2)
+library(dplyr)
+library(finalfit) # missingness 
+library(ggplot2) 
+library(lubridate) # work with dates
+#library(readr) 
+library(stringr) # string manipulation
 library(tidyr) # melting
-library(lubridate)
-library(finalfit) #missingness 
 
 ##### Read in all the files ##### 
 
@@ -38,9 +42,9 @@ member_20081 <- fread("data/DE1_0_2008_Beneficiary_Summary_File_Sample_1.csv")
 member_20091 <- fread("data/DE1_0_2009_Beneficiary_Summary_File_Sample_1.csv") 
 member_20101 <- fread("data/DE1_0_2010_Beneficiary_Summary_File_Sample_1.csv") 
 
-# rx datasets
+# rx datasets - excluded but can be added for more interesting exploration
 #drug_data1 <- fread("data/DE1_0_2008_to_2010_Prescription_Drug_Events_Sample_1.csv") 
 
-# carrier datasets
+# carrier datasets - excluded but can be added for more interesting exploration
 #carrier1_data1 <- fread("data/DE1_0_2008_to_2010_Carrier_Claims_Sample_1A.csv") 
 #carrier2_data1 <- fread("data/DE1_0_2008_to_2010_Carrier_Claims_Sample_1B.csv") 
