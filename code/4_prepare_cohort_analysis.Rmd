@@ -121,7 +121,7 @@ hyp_claims3 <- cohort_comorbidities %>%
 hyp_claims <- bind_rows(hyp_claims1, hyp_claims2, hyp_claims3) %>% 
   mutate(comorbid_type = "hyp")
 
-# Find any claims for hypertension
+# Find any claims for high cholesterol
 hchol_claims <- cohort_comorbidities %>% 
   filter(if_any(starts_with("ICD9_DGNS"), ~ str_starts(., pattern = "2720"))) %>% 
   mutate(comorbid_type = "hchol")

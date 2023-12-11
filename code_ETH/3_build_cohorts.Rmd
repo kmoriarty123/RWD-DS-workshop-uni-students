@@ -1,0 +1,137 @@
+---
+Author: "Kathleen Moriarty"
+Course: "Introducation to Data Science and RWD"
+Location: "Roche Basel"
+Date: "30 November 2022"
+Title: "Explore CMS Synthetic Claims Data: Build Cohort"
+Desc: "Build cohorts for PTCA vs CABG comparison"
+output: html_notebook
+---
+
+# STEP 1: Only those who are continuously enrolled over the 2008-2010 period (at least 11 months/year)
+
+```{r}
+
+member_cont_enroll <- members %>% 
+  #mutate(continuous_coverage = as.numeric(continuous_coverage)) %>% 
+  group_by(ID) %>% 
+  summarize(three_yr_cov = sum(continuous_coverage)) %>% 
+  filter(three_yr_cov == 3) %>% 
+  select(ID)
+# 55921 of 116,352
+
+# filter the claims data to just members with continuous enrollment
+# Commented for memory concerns
+#claims_cont_enroll <- ip_op_carrier_claims %>% 
+#  filter(ID %in% member_cont_enroll$ID)
+#~3 million
+claims_cont_enroll <- ip_op_claims %>% 
+  filter(ID %in% member_cont_enroll$ID)
+
+```
+
+## Question: Is there anything else we should filter?
+
+
+# STEP 2: Patients with a PTCA diagnosis in 2009
+
+```{r}
+
+#PTCA codes
+#ICD9 Procedure Codes (International Classification of Diseases - 9th Edition)
+ptca_icd9_cd = c('0066', '3601', '3602', '3605', '3606', '3607', '3609')
+#DRG Codes (diagnosis related group)
+ptca_drg_cd = c('516', '517', '526', '527', '555', '556', '557', '558')
+#HCPCS codes (Healthcare Common Procedure Coding System)
+ptca_hcpcs_cd = c('33140', '92980', '92981','92982', '92984', '92995', '92996')
+
+# Find any claims for PTCA
+ptca1 <- claims_cont_enroll %>% 
+  filter(YR == 2009, 
+         ADMTNG_ICD9_DGNS_CD %in% ptca_icd9_cd)
+
+# Search for ICD9 Procedure Codes
+ptca2 <- claims_cont_enroll %>% 
+  filter(YR == 2009,
+         if_any(starts_with("ICD9_PRCDR_CD"), ~ str_starts(., pattern = "0066")))
+ptca3 <- claims_cont_enroll %>% 
+  filter(YR == 2009,
+         if_any(starts_with("ICD9_PRCDR_CD"), ~ str_starts(., pattern = "360")))
+
+# Search for DRG codes
+ptca4 <- claims_cont_enroll %>% 
+  filter(YR == 2009,
+         CLM_DRG_CD %in% ptca_drg_cd)
+
+# Search for HCPCS codes
+ptca5 <- claims_cont_enroll %>% 
+  filter(YR == 2009,
+         if_any(starts_with("HCPCS"), ~ . %in% ptca_hcpcs_cd))
+
+ptca_all <- bind_rows(ptca1, ptca2, ptca3, ptca4, ptca5)
+
+
+```
+
+# STEP 3: Patients with a CABG diagnosis in 2009
+
+```{r}
+
+# CABG codes
+
+#DRG Codes (diagnosis related group)
+cabg_drg_cd = c('106', '107', '109', '547', '548', '549', '550')
+#HCPCS codes (Healthcare Common Procedure Coding System)
+cabg_hcpcs_cd = c('33510','33511','33512','33513','33514', 
+                  '33516', '33517','33518','33519', 
+                  '33521','33522','33523', 
+                  '33533','33534','33535','33536','35600', '33572', 
+                  'S2205','S2206','S2207','S2208','S2209')
+
+# Find any claims for CABG
+#cabg1 <- claims_cont_enroll %>% 
+#  filter(YR == 2009, 
+#         str_starts(ADMTNG_ICD9_DGNS_CD, pattern = "361") |
+#           str_starts(ADMTNG_ICD9_DGNS_CD, pattern = "362"))
+
+# Search for ICD9 Procedure Codes
+cabg2 <- claims_cont_enroll %>% 
+  filter(YR == 2009,
+         if_any(starts_with("ICD9_PRCDR_CD"), ~ str_starts(., pattern = "361")))
+cabg3 <- claims_cont_enroll %>% 
+  filter(YR == 2009,
+         if_any(starts_with("ICD9_PRCDR_CD"), ~ str_starts(., pattern = "362")))
+
+# Search for DRG codes
+cabg4 <- claims_cont_enroll %>% 
+  filter(YR == 2009,
+         CLM_DRG_CD %in% cabg_drg_cd)
+
+# Search for HCPCS codes
+cabg5 <- claims_cont_enroll %>% 
+  filter(YR == 2009,
+         if_any(starts_with("HCPCS"), ~ . %in% cabg_hcpcs_cd))
+
+cabg_all <- bind_rows(cabg2, cabg3, cabg4, cabg5)
+
+```
+
+# Combine CABG + PTCA patients. Only need ID, Index date, and CABG/PTCA
+
+```{r}
+
+ptca_grp <- ptca_all %>% 
+  mutate(index_dt = CLM_FROM_DT,
+         procedure = 'PTCA')%>% 
+  select(ID, index_dt, procedure) 
+
+cabg_grp <- cabg_all %>% 
+   mutate(index_dt = CLM_FROM_DT,
+         procedure = 'CABG') %>% 
+  select(ID, index_dt, procedure) 
+ 
+
+cohort <- bind_rows(ptca_grp, cabg_grp)
+
+
+```

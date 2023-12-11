@@ -1,0 +1,155 @@
+---
+Author: "Kathleen Moriarty"
+Course: "Introducation to Data Science and RWD"
+Location: "Roche Rotkreuz"
+Date: "30 March 2023"
+Title: "Explore CMS Synthetic Claims Data: Preprocess data sets"
+Desc: "Data cleaning: make new variable, change variable types, filter and join tables"
+output: html_document
+---
+
+# Inpatient claims
+
+```{r}
+ip_claims <- ip_claims1 %>% 
+  mutate(CLM_FROM_DT = lubridate::ymd(CLM_FROM_DT),
+         CLM_THRU_DT = lubridate::ymd(CLM_THRU_DT),
+         CLM_ADMSN_DT = lubridate::ymd(CLM_ADMSN_DT),
+         NCH_BENE_DSCHRG_DT = lubridate::ymd(NCH_BENE_DSCHRG_DT),
+         ID = DESYNPUF_ID,
+         YR = lubridate::year(CLM_FROM_DT),
+         claim_type = 'in',
+         medicare_amt = CLM_PMT_AMT + CLM_PASS_THRU_PER_DIEM_AMT * CLM_UTLZTN_DAY_CNT,
+         payer_amt = NCH_PRMRY_PYR_CLM_PD_AMT) %>% 
+  #mutate(across(where(is.logical), as.numeric)) %>% 
+  mutate(across(starts_with("HCPCS_CD"), as.character)) %>% 
+  mutate(across(where(is.character), ~ na_if(.,""))) %>%  # replace all empty strings with NAs to correctly ind missing
+  rowwise() %>% 
+  mutate(patient_amt = sum(NCH_BENE_IP_DDCTBL_AMT, 
+           NCH_BENE_PTA_COINSRNC_LBLTY_AM, 
+           NCH_BENE_BLOOD_DDCTBL_LBLTY_AM, na.rm = TRUE)) %>% 
+  select(ID:patient_amt, 
+         CLM_FROM_DT:PRVDR_NUM, 
+         AT_PHYSN_NPI:OT_PHYSN_NPI, 
+         ICD9_DGNS_CD_1:ICD9_PRCDR_CD_6, 
+         ADMTNG_ICD9_DGNS_CD:HCPCS_CD_45)
+ip_claims1 <- NULL          
+
+```
+
+
+# Outpatient claims
+
+```{r}
+
+op_claims <- op_claims1 %>% 
+  mutate(CLM_FROM_DT = lubridate::ymd(CLM_FROM_DT),
+         CLM_THRU_DT = lubridate::ymd(CLM_THRU_DT),
+         ID = DESYNPUF_ID,
+         YR = lubridate::year(CLM_FROM_DT),
+         claim_type = 'out',
+         medicare_amt = CLM_PMT_AMT,
+         payer_amt = NCH_PRMRY_PYR_CLM_PD_AMT,
+         patient_amt = NCH_BENE_PTB_DDCTBL_AMT +
+           #NCH_BENE_PTA_COINSRNC_LBLTY_AM + 
+           NCH_BENE_BLOOD_DDCTBL_LBLTY_AM +
+           NCH_BENE_PTB_COINSRNC_AMT) %>% 
+  #mutate(across(where(is.logical), as.numeric))  %>% 
+  mutate(across(starts_with("HCPCS_CD"), as.character)) %>%
+  mutate(across(where(is.character), ~ na_if(.,""))) %>%  # replace all empty strings with NAs to correctly ind missing
+  select(ID:patient_amt, 
+         CLM_FROM_DT:PRVDR_NUM, 
+         AT_PHYSN_NPI:OT_PHYSN_NPI, 
+         ICD9_DGNS_CD_1:ICD9_PRCDR_CD_6, 
+         ADMTNG_ICD9_DGNS_CD:HCPCS_CD_45);
+op_claims1 <- NULL          
+
+```
+
+# carrier claims
+
+```{r}
+
+# Commented for memory concerns
+#carrier_data_all <- rbind(carrier1_data1, carrier2_data1)
+#carrier_claims <- carrier_data_all %>% 
+#  mutate(CLM_FROM_DT = lubridate::ymd(CLM_FROM_DT),
+#         CLM_THRU_DT = lubridate::ymd(CLM_THRU_DT),
+#         ID = DESYNPUF_ID,
+#         YR = lubridate::year(CLM_FROM_DT),
+#         claim_type = 'carrier',
+#         patient_amt = rowSums(across(starts_with("LINE_COINSRNC_AMT")), na.rm = T) + 
+#                      rowSums(across(starts_with("LINE_BENE_PTB_DDCTBL_AMT")), na.rm = T),
+#         medicare_amt  = rowSums(across(starts_with("LINE_NCH_PMT_AMT")), na.rm = T),
+#         payer_amt = rowSums(across(starts_with("LINE_BENE_PRMRY_PYR_PD")), na.rm = T))  %>% 
+#  mutate(across(where(is.character), ~ na_if(.,""))) %>%  # replace all empty strings with NAs to correctly ind #missing
+#  select(ID:patient_amt, 
+#         CLM_FROM_DT:HCPCS_CD_13)
+#carrier1_data1 <- NULL
+#carrier2_data1 <- NULL
+#carrier_data_all <- NULL
+
+```
+
+# Drug claims
+
+```{r}
+
+# Commented for memory concerns
+#rx_claims <- drug_data1 %>% 
+#  mutate(SRVC_DT = lubridate::ymd(SRVC_DT),
+#         ID = DESYNPUF_ID, 
+#         YR = lubridate::year(SRVC_DT),
+#         claim_type = 'rx') %>% 
+#  select(!DESYNPUF_ID)
+#drug_data1 <- NULL
+         
+```
+
+# Combine ip, op claims data
+
+```{r}
+
+ip_op_claims <- bind_rows(op_claims, ip_claims, id = NULL)
+
+```
+
+# Member data
+
+```{r}
+
+member_20081$YR = 2008
+member_20091$YR = 2009
+member_20101$YR = 2010
+members_all <- rbind(member_20081, member_20091, member_20101)
+members <- members_all %>% 
+  mutate(birth_dt = lubridate::ymd(BENE_BIRTH_DT),
+         death_dt = lubridate::ymd(BENE_DEATH_DT),
+         female = as.factor(if_else(BENE_SEX_IDENT_CD==2,1,0)),
+         race = case_when(BENE_RACE_CD == 1 ~ 'White',
+                          BENE_RACE_CD == 2 ~ 'Black',
+                          BENE_RACE_CD == 3 ~ 'Other',
+                          BENE_RACE_CD == 5 ~ 'Hispanic'),
+         age = YR - lubridate::year(birth_dt), 
+         age_cat = case_when(age < 18 ~ '< 18',
+                             age >= 18  & age <= 34 ~ '18-34',
+                             age >= 35  & age <= 49 ~ '35-49',
+                             age >= 50  & age <= 64 ~ '50-64',
+                             age >= 65 ~ '65+'),
+         continuous_coverage = if_else((BENE_HI_CVRAGE_TOT_MONS > 10 & #Part A
+                                           BENE_SMI_CVRAGE_TOT_MONS > 10 & #Part B
+                                           PLAN_CVRG_MOS_NUM > 10) | #Part D 
+                                         BENE_HMO_CVRAGE_TOT_MONS > 10, 1, 0),
+         ID = DESYNPUF_ID,
+         state_code = as.factor(SP_STATE_CODE)) %>% 
+  mutate(across(starts_with("SP_"), as.factor)) %>% 
+  select(YR:state_code, SP_ALZHDMTA:SP_STRKETIA)
+  
+member_20081 <- NULL
+member_20091 <- NULL
+member_20101 <- NULL
+
+```
+
+
+

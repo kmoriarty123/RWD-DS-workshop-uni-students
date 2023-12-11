@@ -32,3 +32,6 @@ event_documents/*
 
 # Play files
 code/play/*
+
+# Admin files
+admin/*

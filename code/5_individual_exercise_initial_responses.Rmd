@@ -1,0 +1,113 @@
+---
+Author: "Kathleen Moriarty"
+Course: "Real-World Data (395-0102-00L) Autumn 2022"
+Location: "D-HEST, ETH Zurich"
+Date: "29 November 2022"
+Title: "Explore CMS Synthetic Claims Data: Optional Exercises"
+Desc: "Explore the data and code independently, trying to have an initial answer to the exercise questions."
+output: html_notebook
+---
+
+Homework Notes
+
+All of these solutions are oversimplification of the responses to the research questions at hand.
+Thorough cleaning/filter/imputing of data would be needed as well as literature review of what is already known would be needed before drawing any conclusions.
+
+
+1. Create other plots of interest for the exploratory section. (medium)
+
+2. Check for missingness of another variable of interest (easy). 
+Without pursuing a deeper analysis, in your opinion, does this variable appear to be missing at random or not?
+See section “# Missingness” from the 2_explore_data.Rmd file
+
+```{r}
+# Check missingness of admiting ICD9 diagnosis code.
+# Missing_compare: Comparisons for continuous data use a Kruskal Wallis and for discrete data a chi-squared test.
+outcome <- 'ICD9_DGNS_CD_1'
+explanatory <- c('female', 'race', 'age', 'continuous_coverage','SP_ALZHDMTA', 'SP_DEPRESSN')
+op_claims %>% 
+  left_join(members, by = c("ID", "YR")) %>% 
+  missing_compare(outcome, explanatory)
+
+```
+
+3. Show mean claim amount for diagnoses related to diabetes (difficult)
+In file 4_prepare_cohort_analysis.Rmd, refer to lines 129-133 (with comment “# Find any claims for diabetes”) to find the diabetes ICD9 diagnosis codes 
+Refer to 2_explore_data.Rmd for exploration code with claims. 
+Optional: include the carrier claims in this as well (commented out parts)
+
+```{r}
+
+# Find any claims for diabetes
+dia_icd9 <- c('249', '250', '3572', '36201', '36202', '36641')
+
+# Select the inpatient/outpatient claims with these codes
+dia_claims <- ip_op_claims %>% 
+  filter(if_any(starts_with("ICD9_DGNS"), ~ . %in% dia_icd9)) %>% 
+   mutate(comorbid_type = "dia")
+
+# Select the mean claim amount
+dia_claims %>% 
+  group_by(claim_type) %>% 
+  summarize(mean_medicare_amt = mean(medicare_amt),
+            mean_payer_amt = mean(payer_amt),
+            mean_patient_amt = mean(patient_amt))
+
+# Interpretation (oversimplification)
+# The results show that mean medicare, payer, patient amount per claim for all claims related to diabetes.
+# We can compare this with another chronic condition
+
+# Find any claims for hypertension
+hyp_claims1 <- ip_op_claims %>% 
+  filter(if_any(starts_with("ICD9_DGNS"), ~ str_starts(., pattern = "4011")))
+hyp_claims2 <- ip_op_claims %>% 
+  filter(if_any(starts_with("ICD9_DGNS"), ~ str_starts(., pattern = "4019")))
+hyp_claims3 <- ip_op_claims %>% 
+  filter(if_any(starts_with("ICD9_DGNS"), ~ str_starts(., pattern = "4010")))
+hyp_claims <- bind_rows(hyp_claims1, hyp_claims2, hyp_claims3) %>% 
+  mutate(comorbid_type = "hyp")
+          
+# Select the mean claim amount
+hyp_claims %>% 
+  group_by(claim_type) %>% 
+  summarize(mean_medicare_amt = mean(medicare_amt),
+            mean_payer_amt = mean(payer_amt),
+            mean_patient_amt = mean(patient_amt))
+
+# Why would there be a difference with hyptension
+
+```
+
+4. Plot the top 10 diagnosis codes by cost burden  (difficult)
+Focus only on inpatient & outpatient claims
+Group the dataframe by diagnosis code and summarize the claim amounts
+Plot a bar graph of the 10
+Do the results surprise you? What could explain these results?
+Explore the data on your own and find something of interest to you (difficult)
+
+```{r}
+
+ip_op_claims %>% 
+  group_by(ADMTNG_ICD9_DGNS_CD) %>% 
+  summarize(mean_all_cost = mean(medicare_amt + payer_amt + patient_amt)) %>% 
+  arrange(desc(mean_all_cost)) %>% 
+  slice_head(n=10)
+  
+# This code would also work 
+ip_op_claims %>% 
+  group_by(ADMTNG_ICD9_DGNS_CD) %>% 
+  summarize(mean_all_cost = mean(medicare_amt + payer_amt + patient_amt)) %>% 
+  slice_max(mean_all_cost, n=10)
+
+44282: Aneurysm of subclavian artery
+801.25: Closed fracture of base of skull with subarachnoid, subdural, and extradural hemorrhage, with prolonged [more than 24 hours] loss of consciousness, without return to pre-existing conscious level
+94520: Blisters, epidermal loss [second degree] of lower limb [leg], unspecified site
+# plot
+  
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
