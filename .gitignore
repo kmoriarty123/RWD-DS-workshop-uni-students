@@ -22,6 +22,7 @@
 
 # R Environment Variables
 .Renviron
+.gitlab-ci.yml
 
 # Data files
 data/*
@@ -32,8 +33,8 @@ event_documents/*
 
 # Play files
 code/play/*
-code_FHNW/*
-code_ETH/*
+code_FHNW
+code_ETH
 
 # Admin files
 admin/*
